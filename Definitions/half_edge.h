@@ -4,6 +4,7 @@
 #include<glm/vec3.hpp>
 #include<glm/vec4.hpp>
 #include<stdlib.h>
+#include <iostream>
 #include<new>
 
 using std::nothrow;
@@ -60,6 +61,10 @@ struct vertex{
     glm::vec4 vcood;
     Vertex *nextV, *prevV;
 };
+
+/*macros*/
+#define mate(he) (((he) == (he)->edg->he1) ? \
+                  (he)->edg->he2 : (he)->edg->he1)
 
 void printSolidos(Solid *s){
     Solid* iteradorS = s;
@@ -309,6 +314,27 @@ Solid *MVFS(Id s, Id f, Id v, glm::vec4 coords){
     newHalf->vtx = newVertex;
     
     return newSolid;
+}
+
+void LMEV(Half_edge *h1, Half_edge *h2, Id v, glm::vec4 coords){
+    Vertex    *newVertex;
+    Half_edge *half;
+    Edge      *newEdge;
+
+    newEdge = make_edge(h1->w_loop->l_face->f_solid);
+    newVertex = make_vertex(v, h1->w_loop->l_face->f_solid, coords);
+
+    half = h1;
+    while(half != h2){
+        half->vtx = newVertex;
+        half = mate(half)->nextH;
+    }
+
+    add_halfedge(newEdge, newVertex, h2, 1);
+    add_halfedge(newEdge, h2->vtx, h1, -1);
+
+    newVertex->v_edge = h2->prevH;
+    h2->vtx->v_edge   = h2;
 }
 
 #endif

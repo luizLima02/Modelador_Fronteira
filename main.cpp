@@ -7,7 +7,6 @@
 //half edge
 #include<half_edge.h>
 
-#include <iostream>
 
 int janela(){
     if (!glfwInit()) {
