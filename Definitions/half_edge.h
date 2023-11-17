@@ -66,7 +66,8 @@ struct vertex{
 #define mate(he) (((he) == (he)->edg->he1) ? \
                   (he)->edg->he2 : (he)->edg->he1)
 
-void printSolidos(Solid *s){
+void printSolidos(Solid *s)
+{
     Solid* iteradorS = s;
     std::cout << "inicio para o fim:" << "\n";
     int k = 0;
@@ -102,7 +103,8 @@ void printSolidos(Solid *s){
 }
 
 //criacao de halfEdge
-Half_edge *add_halfedge(Edge *e, Vertex *v, Half_edge *where, int sign){
+Half_edge *add_halfedge(Edge *e, Vertex *v, Half_edge *where, int sign)
+{
     Half_edge* half;
 
     if(where == nullptr){
@@ -134,7 +136,8 @@ Half_edge *add_halfedge(Edge *e, Vertex *v, Half_edge *where, int sign){
     return half;
 }
 
-Half_edge *del_halfedge(Half_edge *half){
+Half_edge *del_halfedge(Half_edge *half)
+{
     if(half == nullptr ){
         return nullptr;
 
@@ -157,7 +160,8 @@ Half_edge *del_halfedge(Half_edge *half){
 }
 
 //criar solido no fim da lista encadeada
-Solid *make_solido(Id s, Solid *ant){ //ok
+Solid *make_solido(Id s, Solid *ant)
+{ //ok
     //aloca um novo solido
     Solid *nS = new(nothrow)Solid;
     //inicia os valores do solido
@@ -179,7 +183,8 @@ Solid *make_solido(Id s, Solid *ant){ //ok
     return nS;
 }
 
-Face *make_face(Id f, Solid *solid){
+Face *make_face(Id f, Solid *solid)
+{
     Face *nF = new(nothrow)Face;
     nF->face_num = f;
     nF->nextF = nullptr;
@@ -203,7 +208,8 @@ Face *make_face(Id f, Solid *solid){
     return nF;
 }
 
-Loop *make_loop(Face *face){
+Loop *make_loop(Face *face)
+{
     Loop *nL = new(nothrow)Loop;
     nL->nextL = nullptr;
     nL->prevL = nullptr;
@@ -225,7 +231,8 @@ Loop *make_loop(Face *face){
     return nL;
 }
 
-Vertex *make_vertex(Id v, Solid *solid, glm::vec4 coords){
+Vertex *make_vertex(Id v, Solid *solid, glm::vec4 coords)
+{
     Vertex* nV = new(nothrow)Vertex;
     nV->nextV = nullptr;
     nV->prevV = nullptr;
@@ -246,7 +253,8 @@ Vertex *make_vertex(Id v, Solid *solid, glm::vec4 coords){
     return nV;
 }
 
-Half_edge *make_halfedge(Half_edge *ant){
+Half_edge *make_halfedge(Half_edge *ant)
+{
     Half_edge *half = new(nothrow)Half_edge;
     half->nextH = nullptr;
     half->prevH = ant;
@@ -266,7 +274,8 @@ Half_edge *make_halfedge(Half_edge *ant){
     return half;
 }
 
-Edge *make_edge(Solid* solid){
+Edge *make_edge(Solid* solid)
+{
     Edge *nE = new(nothrow)Edge;
     nE->nextE = nullptr;
     nE->prevE = nullptr;
@@ -288,7 +297,11 @@ Edge *make_edge(Solid* solid){
     return nE;
 }
 
-Solid *MVFS(Id s, Id f, Id v, glm::vec4 coords){
+/*MAKE_VERTICE_FACE_SOLID: 
+    cria um solido com um vertice e uma face passando o id do solido, da face e do vertice e um ponto.
+*/
+Solid *MVFS(Id s, Id f, Id v, glm::vec4 coords)
+{
     Solid     *newSolid;
     Face      *newFace;
     Vertex    *newVertex;
@@ -316,7 +329,9 @@ Solid *MVFS(Id s, Id f, Id v, glm::vec4 coords){
     return newSolid;
 }
 
-void LMEV(Half_edge *h1, Half_edge *h2, Id v, glm::vec4 coords){
+/*Low level Make Edge Vertex*/
+void LMEV(Half_edge *h1, Half_edge *h2, Id v, glm::vec4 coords)
+{
     Vertex    *newVertex;
     Half_edge *half;
     Edge      *newEdge;
@@ -335,6 +350,43 @@ void LMEV(Half_edge *h1, Half_edge *h2, Id v, glm::vec4 coords){
 
     newVertex->v_edge = h2->prevH;
     h2->vtx->v_edge   = h2;
+}
+
+/*Low level Make Edge Face*/
+Face *LMEF(Half_edge *he1, Half_edge *he2, Id f)
+{
+    //def variaveis
+    Face        *newFace;
+    Loop        *newLoop;
+    Edge        *newEdge;
+    Half_edge   *he, *nhe1, *nhe2, *temp;
+
+    //alocacao de variaveis
+    newFace = make_face(f ,he1->w_loop->l_face->f_solid);
+    newLoop = make_loop(newFace);
+    newEdge = make_edge(he1->w_loop->l_face->f_solid);
+    newFace->fl_out = newLoop;
+
+    //parte 2
+    he = he1;
+    while(he != he2){
+        he->w_loop = newLoop;
+        he = he->nextH;
+    }
+    
+    nhe1 = add_halfedge(newEdge, he2->vtx, he1, -1);
+    nhe2 = add_halfedge(newEdge, he1->vtx, he2,  1);
+
+    nhe1->prevH->nextH = nhe2;
+    nhe2->prevH->nextH = nhe1;
+    temp = nhe1->prevH;
+    nhe1->prevH = nhe2->prevH;
+    nhe2->prevH = temp;
+
+    newLoop->l_edg = nhe1;
+    he2->w_loop->l_edg = nhe2;
+    
+    return newFace;  
 }
 
 #endif
