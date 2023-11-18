@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 project(Frontier)
 
+
 #set variables
 set(Library_Dir libs)
 set(Def_library Definitions)
 set(GLM_STATIC_LIBRARY_ENABLE true)
 
+#create execultable
+add_executable(${PROJECT_NAME} ${Def_library}/half_edge.h main.cpp)
 
 #other CMakes
+add_subdirectory(external/glfw)
 add_subdirectory(${Library_Dir}/Glad)
 add_subdirectory(${Library_Dir}/Glm/gli)
 add_subdirectory(${Library_Dir}/Glm/glm)
@@ -15,28 +19,28 @@ add_subdirectory(${Library_Dir}/ImGui)
 
 
 #includes
-include_directories(${Library_Dir}/GLFW/GLFW)
-include_directories(${Library_Dir}/Glad/include/glad)
-include_directories(${Library_Dir}/Glm/glm/..)
-include_directories(${Library_Dir}/Glm/gli/..)
-include_directories(${Library_Dir}/ImGui)
-include_directories(${Def_library})
+target_include_directories(${PROJECT_NAME}
+                            PUBLIC external/glfw/include
+                            PUBLIC ${Library_Dir}/Glad/include/glad
+                            PUBLIC ${Library_Dir}/Glm/glm/..
+                            PUBLIC ${Library_Dir}/Glm/gli/..
+                            PUBLIC ${Library_Dir}/ImGui
+                            PUBLIC ${Def_library}
+                            )
 
-#create variables
-add_executable(${PROJECT_NAME} ${Def_library}/half_edge.h main.cpp)
 
-#glad
-target_link_libraries(${PROJECT_NAME} glad)
+#links de diretorios
+link_directories(${PROJECT_NAME}
+    PRIVATE external/glfw/src
+    )
 
-#glfw
-target_link_libraries(${PROJECT_NAME} glfw3)
+#link libraries 
+target_link_libraries(${PROJECT_NAME}
+    glfw 
+    glad 
+    gli_lib 
+    glm_static 
+    imgui_lib
+    )
 
-#gli
-target_link_libraries(${PROJECT_NAME} gli_lib)
-
-#glm
-target_link_libraries(${PROJECT_NAME} glm_static)
-
-#glm
-target_link_libraries(${PROJECT_NAME} imgui_lib)
 
