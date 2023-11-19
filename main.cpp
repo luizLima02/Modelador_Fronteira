@@ -7,6 +7,7 @@
 //half edge
 #include<half_edge.h>
 
+extern Solid* firstSolid;
 
 int janela(){
     if (!glfwInit()) {
@@ -62,7 +63,48 @@ int janela(){
 
 int main() {
     system("cls");
-    Solid* s = MVFS(1,1,1,glm::vec4(1,2,3,1));
-    printSolidos(s);
+    Solid* s = block(1, glm::vec3(10,10,10));//circle(1, 0, 0, 10, 0, 10);//MVFS(1, 1, 1, glm::vec4(0, 0, 0, 1));
+    /*SMEV(1, 1, 1, 2, glm::vec4(10, 10, 10, 1));
+    SMEV(1, 1, 2, 3, glm::vec4(11, 12, 12, 1));
+    SMEV(1, 1, 3, 4, glm::vec4(13, 14, 15, 1));
+
+    SMEF(1,1,1,4,2);
+    std::pair maximos = getMaxNames(s->solid_num);
+    std::cout << "Vertex m:" << maximos.first << " Face m:" << maximos.second <<"\n";
+    std::cout << "\n---------\n";*/
+    //printar todas as arestas de s;
+    Edge* e = s->s_edges;
+    int k = 1;
+    while(e != NIL){
+        //ponto inicial
+        std::cout << "Aresta h1:" << k << " p1: " << e->he1->vtx->vertex_num << " pf: " << e->he1->nextH->vtx->vertex_num <<"\n";
+        //std::cout << "Aresta h2:" << k << " p1: " << e->he2->vtx->vertex_num << " pf: " << e->he2->nextH->vtx->vertex_num <<"\n";
+        e = e->nextE;
+        k++;
+        if(k >= 100){break;}
+        //ponto final
+    }
+    std::cout << "\n-------------------------\n";
+    /*Vertex* v = s->s_vertex;
+    while(v != NIL){
+        //ponto inicial
+        std::cout         << "v: "
+                          << v->vertex_num
+                          << ": ("
+                          << v->vcood.x
+                          << " "
+                          << v->vcood.y
+                          << " "
+                          << v->vcood.z
+                          << ")\n";
+        v = v->nextV;
+    }*/
+    //SMEV(s->solid_num, 1, 3, 4, glm::vec4(10,11,12,1));
+    //std::cout << "\n---------\n";
+    
+    //printSolidos(s);
+    std::cout << "\n-------------------------\n";
+    ListSolidos(firstSolid);
+    system("pause");
     return 0;
 }
