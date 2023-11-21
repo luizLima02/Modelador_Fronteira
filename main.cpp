@@ -7,6 +7,10 @@
 //half edge
 #include<half_edge.h>
 
+//renderizador
+#include<mesh.h>
+
+
 extern Solid* firstSolid;
 
 int janela(){
@@ -73,19 +77,10 @@ int main() {
     std::cout << "Vertex m:" << maximos.first << " Face m:" << maximos.second <<"\n";
     std::cout << "\n---------\n";*/
     //printar todas as arestas de s;
-    Edge* e = s->s_edges;
-    int k = 1;
-    while(e != NIL){
-        //ponto inicial
-        std::cout << "Aresta h1:" << k << " p1: " << e->he1->vtx->vertex_num << " pf: " << e->he1->nextH->vtx->vertex_num <<"\n";
-        //std::cout << "Aresta h2:" << k << " p1: " << e->he2->vtx->vertex_num << " pf: " << e->he2->nextH->vtx->vertex_num <<"\n";
-        e = e->nextE;
-        k++;
-        if(k >= 100){break;}
-        //ponto final
-    }
     std::cout << "\n-------------------------\n";
-    /*Vertex* v = s->s_vertex;
+    std::vector <glm::vec3>points;
+    Vertex* v = s->s_vertex;
+    int k = 0;
     while(v != NIL){
         //ponto inicial
         std::cout         << "v: "
@@ -97,14 +92,18 @@ int main() {
                           << " "
                           << v->vcood.z
                           << ")\n";
+        points.push_back(glm::vec3(v->vcood.x, v->vcood.y, v->vcood.z));
         v = v->nextV;
-    }*/
+        k++;
+    }
     //SMEV(s->solid_num, 1, 3, 4, glm::vec4(10,11,12,1));
     //std::cout << "\n---------\n";
-    
+    Mesh m = Mesh(points, k);
+    m.render();
     //printSolidos(s);
     std::cout << "\n-------------------------\n";
-    ListSolidos(firstSolid);
+    std::cout << "Quantidade de vertices: " << k << "\n";
+    //ListSolidos(firstSolid);
     system("pause");
     return 0;
 }

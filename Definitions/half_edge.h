@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef HALF_EDGE
 #define HALF_EDGE
 
@@ -6,6 +8,7 @@
 #include<glm/vec4.hpp>
 
 //includes c++
+#include<vector>
 #include<stdlib.h>
 #include<math.h>
 #include <iostream>

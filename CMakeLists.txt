@@ -5,10 +5,16 @@ project(Frontier)
 #set variables
 set(Library_Dir libs)
 set(Def_library Definitions)
+set(Render Renderizador)
 set(GLM_STATIC_LIBRARY_ENABLE true)
 
 #create execultable
-add_executable(${PROJECT_NAME} ${Def_library}/half_edge.h main.cpp)
+add_executable(${PROJECT_NAME} 
+                ${Def_library}/half_edge.h 
+                ${Render}/mesh.h 
+                main.cpp
+                )
+
 
 #other CMakes
 add_subdirectory(external/glfw)
@@ -26,6 +32,7 @@ target_include_directories(${PROJECT_NAME}
                             PUBLIC ${Library_Dir}/Glm/gli/..
                             PUBLIC ${Library_Dir}/ImGui
                             PUBLIC ${Def_library}
+                            ${Render}
                             )
 
 
