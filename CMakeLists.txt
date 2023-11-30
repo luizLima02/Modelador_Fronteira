@@ -12,6 +12,9 @@ set(GLM_STATIC_LIBRARY_ENABLE true)
 add_executable(${PROJECT_NAME} 
                 ${Def_library}/half_edge.h 
                 ${Render}/mesh.h 
+                ${Render}/Shader.h 
+                ${Render}/Imagem.h 
+                ${Render}/stb_image.h 
                 main.cpp
                 )
 

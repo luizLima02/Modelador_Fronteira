@@ -83,7 +83,7 @@ int main() {
     int k = 0;
     while(v != NIL){
         //ponto inicial
-        std::cout         << "v: "
+        /*std::cout         << "v: "
                           << v->vertex_num
                           << ": ("
                           << v->vcood.x
@@ -91,18 +91,16 @@ int main() {
                           << v->vcood.y
                           << " "
                           << v->vcood.z
-                          << ")\n";
+                          << ")\n";*/
         points.push_back(glm::vec3(v->vcood.x, v->vcood.y, v->vcood.z));
         v = v->nextV;
         k++;
     }
-    //SMEV(s->solid_num, 1, 3, 4, glm::vec4(10,11,12,1));
-    //std::cout << "\n---------\n";
-    Mesh m = Mesh(points, k);
-    m.render();
-    //printSolidos(s);
-    std::cout << "\n-------------------------\n";
-    std::cout << "Quantidade de vertices: " << k << "\n";
+
+
+    Mesh_Aresta m = Mesh_Aresta(points[0], points[1]);
+    m.render(10);
+    //ListSolidos(s);
     //ListSolidos(firstSolid);
     system("pause");
     return 0;
