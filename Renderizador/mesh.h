@@ -38,12 +38,12 @@ struct Point{
     }
 };
 
-class Mesh
+class Mesh_Aresta
 {
 private:
     glm::mat4 transform;
     Point* pontos;
-    int qntDeVertices;
+    int qntDeVertices = 2;
     //buffers
     GLuint VAO;
     GLuint VBO;
@@ -65,54 +65,52 @@ private:
     }
 public:
 
-    Mesh(std::vector<Point> points, int qntDePontos){
-       this->pontos         = new(std::nothrow)Point[qntDePontos];
-       this->qntDeVertices  = qntDePontos;
-       for(int i = 0; i < qntDePontos; i++)
-            this->pontos[i] = points[i];
-       
+    Mesh_Aresta(Point pi, Point pf){
+       this->pontos = new(std::nothrow)Point[2];
+       this->pontos[1] = pf;
+       this->pontos[0] = pi;
        glm::mat4 transform = glm::mat4(1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0,  1);
        this->transform = transform;
        initBuffers();
     }
 
-    Mesh(std::vector<glm::vec3> points, int qntDePontos){
-       this->pontos         = new(std::nothrow)Point[qntDePontos];
-       this->qntDeVertices  = qntDePontos;
-       for(int i = 0; i < qntDePontos; i++)
-            this->pontos[i] = Point(points[i]);
-       
+    Mesh_Aresta(glm::vec3 pi, glm::vec3 pf){
+       this->pontos = new(std::nothrow)Point[2];
+       this->pontos[1] = Point(pf);
+       this->pontos[0] = Point(pi);
        glm::mat4 transform = glm::mat4(1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0,  1);
        this->transform = transform;
        initBuffers();
     }
 
-    Mesh(std::vector<glm::vec4> points, int qntDePontos){
-       this->pontos         = new(std::nothrow)Point[qntDePontos];
-       this->qntDeVertices  = qntDePontos;
-       for(int i = 0; i < qntDePontos; i++)
-            this->pontos[i] = Point(points[i]);
-       
+    Mesh_Aresta(glm::vec4 pi, glm::vec4 pf){
+       this->pontos = new(std::nothrow)Point[2];
+       this->pontos[1] = Point(pf);
+       this->pontos[0] = Point(pi);
        glm::mat4 transform = glm::mat4(1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0,  1);
        this->transform = transform;
        initBuffers();
     }
 
-    ~Mesh(){
+    ~Mesh_Aresta(){
         glDeleteVertexArrays(1, &this->VAO);
         glDeleteBuffers(1, &this->VBO);
     }
     
     void render(int k){
-        for(int i = 0; i < this->qntDeVertices; i++){
-            std::cout << "( "
-                  << this->pontos[i].px
+        std::cout << "( "
+                  << this->pontos[0].px
                   << " "
-                  << this->pontos[i].py
+                  << this->pontos[0].py
                   << " "
-                  << this->pontos[i].pz
+                  << this->pontos[0].pz
+                  << " )-------------( "
+                  << this->pontos[1].px
+                  << " "
+                  << this->pontos[1].py
+                  << " "
+                  << this->pontos[1].pz
                   << " )\n";
-        }
     }
     
     void render(Shader *shader){
@@ -129,7 +127,7 @@ public:
 
 class Modelo{
     private:
-        std::vector<Mesh*> arests;
+        std::vector<Mesh_Aresta*> arests;
     public:
 
     Modelo(Solid *s){
@@ -138,32 +136,25 @@ class Modelo{
         Half_edge *half;
         f = s->s_faces;
         while(f){
-            int numVertices = 0;
-            std::vector<glm::vec4> faceAtual;
-            //std::cout << "Face " << f->face_num << ":\n";
+            std::cout << "Face " << f->face_num << ":\n";
             l = f->f_loops;
             while(l){
                 std::cout << "Loop:\n";
                 half = l->l_edg;
                 do{
-                    numVertices++;
-                    faceAtual.push_back(half->vtx->vcood);
+                    Mesh_Aresta* ar = new Mesh_Aresta(half->vtx->vcood, half->nextH->vtx->vcood);
+                    this->arests.push_back(ar);
                 }while((half = half->nextH) != l->l_edg);
                 l = l->nextL;
             }
-            Mesh* ar = new Mesh(faceAtual, numVertices);
-            this->arests.push_back(ar);
             f = f->nextF;
         }
     }
 
     void Render(Shader* shader){
-        int meshs = 0;
-        for(auto& i : this->arests)
-            meshs++;
-            //i->render(shader);
-        
-        std::cout << meshs << "\n";
+        for(auto& i : this->arests){
+            i->render(shader);
+        }
     }
 
     ~Modelo(){

@@ -19,8 +19,8 @@
 
 extern Solid* firstSolid;
 
-#define WIDTH   640
-#define HEIGHT  480
+#define WIDTH   1280
+#define HEIGHT  720
 
 
 int main() {
@@ -112,9 +112,7 @@ int main() {
         if(deltaTime >= frameDuration){
             last_frame = now;
 
-            modelo->Render(shad);
-                
-
+            
             frames++;
             if (now - lastTime >= 1.0) {
                 std::string frm = "FPS: " + std::to_string(frames);
@@ -132,7 +130,9 @@ int main() {
             glClear(GL_COLOR_BUFFER_BIT);
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-                
+            //renderizar Modelos
+            modelo->Render(shad);
+            
             glfwSwapBuffers(window);
         }
     }
