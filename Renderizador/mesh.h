@@ -22,6 +22,13 @@ struct Point{
         pz = pos.z;
     }
 
+     Point(glm::vec4 pos)
+    {
+        px = pos.x;
+        py = pos.y;
+        pz = pos.z;
+    }
+
     Point(float px, float py, float pz):px(px), py(py), pz(pz)
     {
     }
@@ -31,12 +38,12 @@ struct Point{
     }
 };
 
-class Mesh_Aresta
+class Mesh
 {
 private:
     glm::mat4 transform;
     Point* pontos;
-    int qntDeVertices = 2;
+    int qntDeVertices;
     //buffers
     GLuint VAO;
     GLuint VBO;
@@ -58,41 +65,56 @@ private:
     }
 public:
 
-    Mesh_Aresta(Point pi, Point pf){
-       this->pontos = new(std::nothrow)Point[2];
-       this->pontos[1] = pf;
-       this->pontos[0] = pi;
+    Mesh(std::vector<Point> points, int qntDePontos){
+       this->pontos         = new(std::nothrow)Point[qntDePontos];
+       this->qntDeVertices  = qntDePontos;
+       for(int i = 0; i < qntDePontos; i++)
+            this->pontos[i] = points[i];
+       
        glm::mat4 transform = glm::mat4(1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0,  1);
        this->transform = transform;
+       initBuffers();
     }
 
-    Mesh_Aresta(glm::vec3 pi, glm::vec3 pf){
-       this->pontos = new(std::nothrow)Point[2];
-       this->pontos[1] = Point(pf);
-       this->pontos[0] = Point(pi);
+    Mesh(std::vector<glm::vec3> points, int qntDePontos){
+       this->pontos         = new(std::nothrow)Point[qntDePontos];
+       this->qntDeVertices  = qntDePontos;
+       for(int i = 0; i < qntDePontos; i++)
+            this->pontos[i] = Point(points[i]);
+       
        glm::mat4 transform = glm::mat4(1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0,  1);
        this->transform = transform;
-
+       initBuffers();
     }
 
-    ~Mesh_Aresta(){
-
+    Mesh(std::vector<glm::vec4> points, int qntDePontos){
+       this->pontos         = new(std::nothrow)Point[qntDePontos];
+       this->qntDeVertices  = qntDePontos;
+       for(int i = 0; i < qntDePontos; i++)
+            this->pontos[i] = Point(points[i]);
+       
+       glm::mat4 transform = glm::mat4(1, 0, 0,  0, 0, 1, 0,  0, 0, 0, 1, 0, 0, 0, 0,  1);
+       this->transform = transform;
+       initBuffers();
     }
+
+    ~Mesh(){
+        glDeleteVertexArrays(1, &this->VAO);
+        glDeleteBuffers(1, &this->VBO);
+    }
+    
     void render(int k){
-        std::cout << "( "
-                  << this->pontos[0].px
+        for(int i = 0; i < this->qntDeVertices; i++){
+            std::cout << "( "
+                  << this->pontos[i].px
                   << " "
-                  << this->pontos[0].py
+                  << this->pontos[i].py
                   << " "
-                  << this->pontos[0].pz
-                  << " )-------------( "
-                  << this->pontos[1].px
-                  << " "
-                  << this->pontos[1].py
-                  << " "
-                  << this->pontos[1].pz
+                  << this->pontos[i].pz
                   << " )\n";
+        }
     }
+    
     void render(Shader *shader){
         glBindVertexArray(this->VAO);
         //ativa shader
@@ -101,6 +123,50 @@ public:
         //RENDER
 		glDrawArrays(GL_LINE_STRIP,0, this->qntDeVertices);
         glBindVertexArray(0);
+    }
 
+};
+
+class Modelo{
+    private:
+        std::vector<Mesh*> arests;
+    public:
+
+    Modelo(Solid *s){
+        Face      *f;
+        Loop      *l;
+        Half_edge *half;
+        f = s->s_faces;
+        while(f){
+            int numVertices = 0;
+            std::vector<glm::vec4> faceAtual;
+            //std::cout << "Face " << f->face_num << ":\n";
+            l = f->f_loops;
+            while(l){
+                std::cout << "Loop:\n";
+                half = l->l_edg;
+                do{
+                    numVertices++;
+                    faceAtual.push_back(half->vtx->vcood);
+                }while((half = half->nextH) != l->l_edg);
+                l = l->nextL;
+            }
+            Mesh* ar = new Mesh(faceAtual, numVertices);
+            this->arests.push_back(ar);
+            f = f->nextF;
+        }
+    }
+
+    void Render(Shader* shader){
+        int meshs = 0;
+        for(auto& i : this->arests)
+            meshs++;
+            //i->render(shader);
+        
+        std::cout << meshs << "\n";
+    }
+
+    ~Modelo(){
+        
     }
 };
