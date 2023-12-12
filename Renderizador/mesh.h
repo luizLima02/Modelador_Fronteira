@@ -92,26 +92,12 @@ public:
        initBuffers();
     }
 
+
     ~Mesh_Aresta(){
         glDeleteVertexArrays(1, &this->VAO);
         glDeleteBuffers(1, &this->VBO);
     }
     
-    void render(int k){
-        std::cout << "( "
-                  << this->pontos[0].px
-                  << " "
-                  << this->pontos[0].py
-                  << " "
-                  << this->pontos[0].pz
-                  << " )-------------( "
-                  << this->pontos[1].px
-                  << " "
-                  << this->pontos[1].py
-                  << " "
-                  << this->pontos[1].pz
-                  << " )\n";
-    }
     
     void render(Shader *shader){
         glBindVertexArray(this->VAO);
@@ -119,8 +105,9 @@ public:
         shader->use();
         shader->setMat4("model", this->transform);
         //RENDER
-		glDrawArrays(GL_LINE_STRIP,0, this->qntDeVertices);
+        glDrawArrays(GL_LINE_STRIP,0, this->qntDeVertices);
         glBindVertexArray(0);
+		
     }
 
 };
@@ -134,20 +121,24 @@ class Modelo{
         Face      *f;
         Loop      *l;
         Half_edge *half;
-        f = s->s_faces;
-        while(f){
-            std::cout << "Face " << f->face_num << ":\n";
-            l = f->f_loops;
-            while(l){
-                std::cout << "Loop:\n";
-                half = l->l_edg;
-                do{
-                    Mesh_Aresta* ar = new Mesh_Aresta(half->vtx->vcood, half->nextH->vtx->vcood);
-                    this->arests.push_back(ar);
-                }while((half = half->nextH) != l->l_edg);
-                l = l->nextL;
+        std::pair max = getMaxNames(s->solid_num);
+        if(max.first == 1){
+            Mesh_Aresta* ar = new Mesh_Aresta(s->s_vertex->vcood, s->s_vertex->vcood);
+            this->arests.push_back(ar);
+        }else{
+            f = s->s_faces;
+            while(f){
+                l = f->f_loops;
+                while(l){
+                    half = l->l_edg;
+                    do{
+                        Mesh_Aresta* ar = new Mesh_Aresta(half->vtx->vcood, half->nextH->vtx->vcood);
+                        this->arests.push_back(ar);
+                    }while((half = half->nextH) != l->l_edg);
+                    l = l->nextL;
+                }
+                f = f->nextF;
             }
-            f = f->nextF;
         }
     }
 

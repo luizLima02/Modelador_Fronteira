@@ -4,8 +4,10 @@
 #define HALF_EDGE
 
 //includes libs
+#include <glm/gtc/matrix_transform.hpp>
 #include<glm/vec3.hpp>
 #include<glm/vec4.hpp>
+#include<glm/mat4x4.hpp>
 
 //includes c++
 #include<vector>
@@ -600,6 +602,29 @@ std::pair<Id,Id> getMaxNames(Id sn){
     return std::make_pair(maxVertex, maxFace);
 }
 
+
+//funcoes de transformacao
+glm::mat4 matident(){
+     glm::mat4 m = glm::mat4(1);
+    return m;
+}
+
+glm::mat4 mattrans(glm::mat4 m, glm::vec4 t){
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(t));
+    glm::mat4 res = translationMatrix * m;
+    return res;
+}
+
+glm::mat4 matrotate(glm::mat4 m, glm::vec3 r) {
+   
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), r.x, glm::vec3(1,0,0));
+    rotationMatrix           = glm::rotate(rotationMatrix , r.y, glm::vec3(0,1,0));
+    rotationMatrix           = glm::rotate(rotationMatrix , r.z, glm::vec3(0,0,1));
+    glm::mat4 result = rotationMatrix * m;
+    return result;
+}
+
+
 /*
 Make an arc at (cx, cy), on plane z = h, with radius rad, with n edges,
 the arc ranges from angle phi1 to phi2, measured in degrees, where 0.0 = x - axis,
@@ -630,7 +655,6 @@ void arc(Id s, Id f, Id v, float cx, float cy, float rad, float h, float phi1, f
 Solid *circle(Id sn, float cx, float cy, float rad, float h, int n)
 {
     Solid *s;
-
     s = MVFS(sn, 1, 1, glm::vec4(cx+rad, cy, h, 1));
     arc(sn, 1, 1, cx, cy, rad, h, 0.0, ((n-1)*360.0/n), n-1);
     SMEF(sn, 1, 1, n, 2);
@@ -670,7 +694,84 @@ void sweep(Face* fac, glm::vec3 d)
     }
 }
 
+
+void rsweep(Solid *s, int nfaces){
+    Half_edge *first, *cfirst, *last, *scan;
+    Face       *tailf;
+    glm::mat4  m;
+    glm::vec4  v;
+
+    std::pair max = getMaxNames(s->solid_num);
+    first = s->s_faces->f_loops->l_edg;
+    while(first->edg != first->nextH->edg){first = first->nextH;}
+    last = first->nextH;
+    while(last->edg != last->nextH->edg){last = last->nextH;}
+    cfirst = first;
+    m = matident();
+    m = matrotate(m, glm::vec3((360.0/nfaces), 0.0, 0.0));
+    while (--nfaces)
+    {
+        v = m * cfirst->nextH->vtx->vcood;
+        LMEV(cfirst->nextH, cfirst->nextH, ++max.first, v);
+        scan = cfirst->nextH;
+
+        while(scan != last->nextH){
+            v = m * scan->prevH->vtx->vcood;
+            LMEV(scan->prevH, scan->prevH, ++max.first, v);
+            LMEF(scan->prevH->prevH, scan->nextH, ++max.second);
+            scan = mate(scan->nextH->nextH);
+        }
+        last = scan;
+        cfirst = mate(cfirst->nextH->nextH) ; 
+    }
+    tailf = LMEF(cfirst->nextH, mate(first), ++max.second);
+    while(cfirst != scan){
+        LMEF(cfirst, cfirst->nextH->nextH->nextH, ++max.second);
+        cfirst = mate(cfirst->prevH)->prevH;
+    }
+    
+}
+
+void Esweep(Face* fac, glm::vec3 d)
+{
+    Loop        *l;
+    Half_edge   *first, *scan;
+    Vertex      *v;
+
+    std::pair max = getMaxNames(fac->f_solid->solid_num);
+    l = fac->f_loops;
+    while(l){
+        first = l->l_edg;
+        scan = first->nextH;
+        v = scan->vtx;
+        LMEV(scan, scan, ++max.first, glm::vec4(
+            0,
+            0,
+            v->vcood.z + d.z,
+            1));
+        while(scan != first)
+        {
+            v = scan->nextH->vtx;
+            LMEV(scan->nextH, scan->nextH, ++max.first, glm::vec4(
+            0,
+            0,
+            v->vcood.z + d.z,
+            1));
+            LMEF(scan->prevH, scan->nextH->nextH, ++max.second);
+            scan = mate(scan->nextH)->nextH;
+        }
+        LMEF(scan->prevH, scan->nextH->nextH, ++max.second);
+        l = l->nextL;
+    }
+}
+
 //primitivas
+/*
+Cria um Solido bloco com
+Id sn
+dimencoes d
+a partir da posicao (0, 0, 0)
+*/
 Solid *block(Id sn, glm::vec3 d){
     Solid *s;
 
@@ -685,6 +786,159 @@ Solid *block(Id sn, glm::vec3 d){
     return s;
 }
 
+//primitivas
+/*
+Cria um Solido cilindro com
+Id - sn
+pos Z - rad
+altura - h
+numero de pontos - n
+*/
+Solid *cyl(Id sn, float rad, float h, int n){
+    Solid *s;
+    s = circle(sn, 0.0, 0.0, rad, 0.0, n);
+    sweep(getFace(s, 2), glm::vec3( 0, 0, h));
+    return s;
+}
+
+
+Solid *ball(Id sn, float r, int nVert, int nHor){
+    Solid *s;
+
+    s = MVFS(sn, 1, 1, glm::vec4(-r, 0.0, 0.0, 1));
+    arc(sn, 1, 1, 0, 0, r, 0.0, 180.0, 0.0, nVert);
+
+    rsweep(s, nHor);
+    return s;
+}
+
+Solid *cone(Id sn, float rad, float h, int n){
+    Solid *s;
+    s = circle(sn, 0.0, 0.0, rad, 0.0, n);
+    Esweep(getFace(s, 2), glm::vec3( 0, 0, h));
+    return s;
+}
+
+
+void MoveSolid(Solid *s, glm::vec3 t){
+    glm::mat4 transl = glm::translate(glm::mat4(1), t);
+    Vertex *v;
+    v = s->s_vertex;
+    while(v != NIL){
+        v->vcood = transl * v->vcood;
+        v = v->nextV;
+    }
+}
+
+void ScaleSolid(Solid *s, glm::vec3 t){
+    glm::mat4 scal = glm::scale(glm::mat4(1), t);
+    Vertex *v;
+    v = s->s_vertex;
+    while(v != NIL){
+        v->vcood = scal * v->vcood;
+        v = v->nextV;
+    }
+}
+
+void RotateSolid(Solid *s, glm::vec3 r){
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), r.x, glm::vec3(1,0,0));
+    rotationMatrix           = glm::rotate(rotationMatrix , r.y, glm::vec3(0,1,0));
+    rotationMatrix           = glm::rotate(rotationMatrix , r.z, glm::vec3(0,0,1));
+    Vertex *v;
+    v = s->s_vertex;
+    while(v != NIL){
+        v->vcood = rotationMatrix * v->vcood;
+        v = v->nextV;
+    }
+}
+
+double sVolume(Solid *s){
+    Face        *f;
+    Loop        *l;
+    Half_edge   *he1, *he2;
+    glm::vec3   c;
+    double      res;
+
+    res = 0.0;
+    f = s->s_faces;
+    while(f)
+    {
+        l = f->f_loops;
+        while(l){
+            he1 = l->l_edg;
+            he2 = he1->nextH;
+            do{
+                c   = glm::cross(glm::vec3(he1->vtx->vcood), glm::vec3(he2->vtx->vcood));
+                res += glm::dot(glm::vec3(he2->nextH->vtx->vcood), c);
+            
+            }while((he2 = he2->nextH) != he1);
+            l = l->nextL;
+        }
+        f = f->nextF;
+    }
+    return (res/6.0);
+}
+
+glm::vec4 faceeq(Loop *l){
+    Half_edge   *he;
+    double      a,  b,  c,  norm;
+    double      xi, yi, zi, xj, yj, zj, xc, yc, zc;
+    int         len;
+    glm::vec4   eq;
+    a = b = c = xc = yc = zc = 0.0;
+    len = 0;
+    he = l->l_edg;
+    do{
+        xi = he->vtx->vcood.x; 
+        yi = he->vtx->vcood.y;
+        zi = he->vtx->vcood.z;
+        xj = he->nextH->vtx->vcood.x; 
+        yj = he->nextH->vtx->vcood.y; 
+        zj = he->nextH->vtx->vcood.z; 
+        a  += (yi - yj) * (zi + zj);
+        b  += (zi - zj) * (xi + xj);
+        c  += (xi - xj) * (yi + yj);
+        xc += xi;
+        yc += yi;
+        zc += zi;
+        len++;
+    }while((he = he->nextH) != l->l_edg);
+    
+    if((norm = sqrt(a*a + b*b + c*c)) != 0.0){
+        eq.x = a / norm;
+        eq.y = b / norm;
+        eq.z = c / norm;
+        eq.w = (eq.x*xc + eq.y*yc + eq.z*zc) / (-len);
+        return eq;
+    }else{
+        std::cout << "faceeq: null face " << l->l_face->face_num << "\n";
+        return glm::vec4(0);
+    }
+}
+
+double larea(Loop *l){
+    Half_edge   *he;
+    Vertex      *v1, *v2, *v3;
+    glm::vec4    aa, bb;
+    glm::vec4    norm;
+    glm::vec3    cc, dd;
+    dd.x = dd.y = dd.z = 0.0;
+    norm = faceeq(l);
+    he   = l->l_edg;
+    v1   = he->vtx;
+    he   = he->nextH;
+    do{
+        v2 = he->vtx;
+        v3 = he->nextH->vtx;
+        aa = v2->vcood - v1->vcood;
+        bb = v3->vcood - v1->vcood;
+        cc = glm::cross(glm::vec3(aa), glm::vec3(bb));
+        dd.x += cc.x;
+        dd.y += cc.y;
+        dd.z += cc.z;
+    }while((he = he->nextH) != l->l_edg);
+    return (0.5 * glm::dot(glm::vec3(norm), dd));
+}
 
 
 

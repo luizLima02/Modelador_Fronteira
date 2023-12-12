@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}
                 ${Render}/mesh.h 
                 ${Render}/Shader.h 
                 ${Render}/Imagem.h 
+                ${Render}/Camera.h 
                 ${Render}/stb_image.h 
                 main.cpp
                 )
